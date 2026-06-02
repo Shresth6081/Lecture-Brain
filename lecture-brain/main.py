@@ -1,13 +1,3 @@
-"""
-main.py — LectureBrain FastAPI application entry point.
-
-Serves the React frontend build from ../../frontend/dist/ when built,
-or operates as pure API-only when running alongside the Vite dev server.
-
-Run with:
-    uvicorn main:app --reload --host 0.0.0.0 --port 8000
-"""
-
 from pathlib import Path
 
 import requests
@@ -21,13 +11,11 @@ from api.routes_rag import router as rag_router
 from api.routes_transcribe import router as transcribe_router
 from config import OLLAMA_BASE_URL
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR  = Path(__file__).parent
-# React build output: Video_PDF_Summerizer/frontend/dist
-REACT_DIST  = BASE_DIR.parent / "frontend" / "dist"
+
+REACT_DIST  = BASE_DIR.parent
 REACT_ASSETS = REACT_DIST / "assets"
 
-# ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title  = "LectureBrain API",
     description = "AI-powered lecture transcription and RAG Q&A",
@@ -42,12 +30,10 @@ app.add_middleware(
     allow_headers  = ["*"],
 )
 
-# ── API routers ───────────────────────────────────────────────────────────────
 app.include_router(transcribe_router, prefix="/api", tags=["Transcription"])
 app.include_router(rag_router,  prefix="/api", tags=["RAG"])
 app.include_router(files_router,  prefix="/api", tags=["Files"])
 
-# ── Static frontend (only when React dist exists) ─────────────────────────────
 if REACT_ASSETS.exists():
     app.mount("/assets", StaticFiles(directory=str(REACT_ASSETS)), name="assets")
 
@@ -60,7 +46,6 @@ if REACT_ASSETS.exists():
             return FileResponse(str(index))
         return JSONResponse({"detail": "Frontend not built. Run: cd frontend && npm run build"}, status_code=503)
 
-# ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 def health_check():
     """Returns status of the API and Ollama connectivity."""
